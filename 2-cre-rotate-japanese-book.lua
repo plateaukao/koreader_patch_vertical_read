@@ -6,11 +6,28 @@ local ReaderView = require("apps/reader/modules/readerview")
 local Size = require("ui/size")
 
 
+ReaderRolling_orig_addToMainMenu = ReaderRolling.addToMainMenu
+ReaderRolling.addToMainMenu = function(self, menu_items)
+    ReaderRolling_orig_addToMainMenu(self, menu_items)
+    menu_items.toggle_vertical_hack =  {
+        text = "Toggle vertical reading",
+        checked_func = function()
+            return self.ui.doc_settings:isTrue("vertical_reading_hack")
+        end,
+        callback = function()
+            self.ui.doc_settings:flipNilOrFalse("vertical_reading_hack")
+            self.ui:reloadDocument()
+        end,
+    }
+end
+
+
 ReaderRolling.onPreRenderDocument = function(self)
-    -- Only enable these hacks when the typography language has been set to Japanese.
-    if self.ui.typography.text_lang_tag ~= "ja" then
+    -- Let's do it with a setting toggable via the menu item defined above
+    isVerticalHackEnabled = self.ui.doc_settings:isTrue("vertical_reading_hack")
+    if not isVerticalHackEnabled then
         return
-    end
+    end    
 
     -- Inverse reading order (not sure this is for the best, as ToC items are RTL,
     -- but BookMap and PageBrowser may look as expected)
@@ -23,7 +40,8 @@ ReaderRolling.onPreRenderDocument = function(self)
 
     local ReaderView_orig_drawHighlightRect = ReaderView.drawHighlightRect
     ReaderView.drawHighlightRect = function(self, bb, _x, _y, rect, drawer, draw_note_mark)
-        if self.ui.typography.text_lang_tag ~= "ja" or drawer ~= "underscore" then
+        isVerticalHackEnabled = self.ui.doc_settings:isTrue("vertical_reading_hack")
+        if (not isVerticalHackEnabled) or drawer ~= "underscore" then
             return ReaderView_orig_drawHighlightRect(self, bb, _x, _y, rect, drawer, draw_note_mark)
         end
         local x, y, w, h = rect.x, rect.y, rect.w, rect.h
