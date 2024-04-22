@@ -6,6 +6,9 @@ local ReaderView = require("apps/reader/modules/readerview")
 local Size = require("ui/size")
 local UIManager = require("ui/uimanager")
 
+local Dispatcher = require("dispatcher")  -- luacheck:ignore
+local InfoMessage = require("ui/widget/infomessage")
+
 -- Add menu item to toggle the vertical reading hack
 ReaderRolling_orig_addToMainMenu = ReaderRolling.addToMainMenu
 ReaderRolling.addToMainMenu = function(self, menu_items)
@@ -157,5 +160,17 @@ ReaderRolling.onPreRenderDocument = function(self)
         end
         return links
     end
+end
 
+ReaderRolling.onToggleVerticalRead = function(self)
+    self.ui.doc_settings:flipNilOrFalse("vertical_reading_hack")
+    UIManager:nextTick(function()
+        self.ui:reloadDocument()
+    end)
+end
+
+Dispatcher:registerAction("toggle_vertical_read", {category="none", event="ToggleVerticalRead", title="Toggle Vertical Read", rolling=true})
+
+function onToggleVerticalRead()
+    ReaderRolling:onToggleVerticalRead()
 end
