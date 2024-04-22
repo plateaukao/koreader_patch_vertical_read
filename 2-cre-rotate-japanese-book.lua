@@ -11,7 +11,8 @@ ReaderRolling_orig_addToMainMenu = ReaderRolling.addToMainMenu
 ReaderRolling.addToMainMenu = function(self, menu_items)
     ReaderRolling_orig_addToMainMenu(self, menu_items)
     menu_items.toggle_vertical_hack =  {
-        text = "Toggle verting reading hack",
+        sorting_hint = "typeset",
+        text = "Toggle vertical reading",
         checked_func = function()
             return self.ui.doc_settings:isTrue("vertical_reading_hack")
         end,
