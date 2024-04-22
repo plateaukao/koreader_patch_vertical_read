@@ -4,19 +4,22 @@ local Screen = require("device").screen
 local logger = require("logger")
 local ReaderView = require("apps/reader/modules/readerview")
 local Size = require("ui/size")
+local UIManager = require("ui/uimanager")
 
-
+-- Add menu item to toggle the vertical reading hack
 ReaderRolling_orig_addToMainMenu = ReaderRolling.addToMainMenu
 ReaderRolling.addToMainMenu = function(self, menu_items)
     ReaderRolling_orig_addToMainMenu(self, menu_items)
     menu_items.toggle_vertical_hack =  {
-        text = "Toggle vertical reading",
+        text = "Toggle verting reading hack",
         checked_func = function()
             return self.ui.doc_settings:isTrue("vertical_reading_hack")
         end,
-        callback = function()
+        callback = function(touchmenu_instance)
             self.ui.doc_settings:flipNilOrFalse("vertical_reading_hack")
-            self.ui:reloadDocument()
+            UIManager:nextTick(function()
+                self.ui:reloadDocument()
+            end)
         end,
     }
 end
