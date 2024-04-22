@@ -2,6 +2,9 @@ local Blitbuffer = require("ffi/blitbuffer")
 local ReaderRolling = require("apps/reader/modules/readerrolling")
 local Screen = require("device").screen
 local logger = require("logger")
+local ReaderView = require("apps/reader/modules/readerview")
+local Size = require("ui/size")
+
 
 ReaderRolling.onPreRenderDocument = function(self)
     -- Only enable these hacks when the typography language has been set to Japanese.
@@ -17,6 +20,16 @@ ReaderRolling.onPreRenderDocument = function(self)
 
     -- Hack a few credocument methods
     local document = self.ui.document
+
+    local ReaderView_orig_drawHighlightRect = ReaderView.drawHighlightRect
+    ReaderView.drawHighlightRect = function(self, bb, _x, _y, rect, drawer, draw_note_mark)
+        if self.ui.typography.text_lang_tag ~= "ja" or drawer ~= "underscore" then
+            return ReaderView_orig_drawHighlightRect(self, bb, _x, _y, rect, drawer, draw_note_mark)
+        end
+        local x, y, w, h = rect.x, rect.y, rect.w, rect.h
+        bb:paintRect(x - 1, y, Size.line.thick, h, Blitbuffer.COLOR_GRAY_4)
+    end
+
 
     document.setViewDimen = function(self, dimen)
         self._document:setViewDimen(dimen.h, dimen.w)
@@ -124,4 +137,3 @@ ReaderRolling.onPreRenderDocument = function(self)
     end
 
 end
-
