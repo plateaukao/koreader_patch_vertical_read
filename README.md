@@ -1,0 +1,1 @@
+# koreader_plugin_vertical_read
