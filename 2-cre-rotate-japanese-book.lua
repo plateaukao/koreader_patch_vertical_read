@@ -52,7 +52,7 @@ ReaderRolling.onPreRenderDocument = function(self)
             return ReaderView_orig_drawHighlightRect(self, bb, _x, _y, rect, drawer, draw_note_mark)
         end
         local x, y, w, h = rect.x, rect.y, rect.w, rect.h
-        bb:paintRect(x - 1, y, Size.line.thick, h, Blitbuffer.COLOR_GRAY_4)
+        bb:paintRect(x + 2, y, Size.line.thick, h, Blitbuffer.COLOR_GRAY_4)
     end
 
 
