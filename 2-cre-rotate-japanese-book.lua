@@ -97,6 +97,9 @@ ReaderRolling.onPreRenderDocument = function(self)
 
     local orig_getTextFromPositions = document.getTextFromPositions
     document.getTextFromPositions = function(self, pos0, pos1, do_not_draw_selection)
+        if not pos0.copy then -- not a real Geom object
+            return orig_getTextFromPositions(self, pos0, pos1, do_not_draw_selection)
+        end
         pos0 = pos0:copy()
         pos1 = pos1:copy()
         pos0.x, pos0.y = pos0.y, self.orig_rect_w - pos0.x
