@@ -9,6 +9,13 @@ local UIManager = require("ui/uimanager")
 local Dispatcher = require("dispatcher")  -- luacheck:ignore
 local InfoMessage = require("ui/widget/infomessage")
 
+local DataStorage = require("datastorage")
+local _ = require("gettext")
+if G_reader_settings == nil then
+    G_reader_settings = require("luasettings"):open(
+        DataStorage:getDataDir().."/settings.reader.lua")
+end
+
 -- Add menu item to toggle the vertical reading hack
 ReaderRolling_orig_addToMainMenu = ReaderRolling.addToMainMenu
 ReaderRolling.addToMainMenu = function(self, menu_items)
@@ -24,6 +31,19 @@ ReaderRolling.addToMainMenu = function(self, menu_items)
             UIManager:nextTick(function()
                 self.ui:reloadDocument()
             end)
+        end,
+    }
+    menu_items.toggle_dictionary_lookup =  {
+        sorting_hint = "typeset",
+        text = _("Dictionary on single word selection"),
+        checked_func = function()
+            return not self.view.highlight.disabled and G_reader_settings:nilOrFalse("highlight_action_on_single_word")
+        end,
+        enabled_func = function()
+            return not self.view.highlight.disabled
+        end,
+        callback = function()
+            G_reader_settings:flipNilOrFalse("highlight_action_on_single_word")
         end,
     }
 end
@@ -52,7 +72,8 @@ ReaderRolling.onPreRenderDocument = function(self)
             return ReaderView_orig_drawHighlightRect(self, bb, _x, _y, rect, drawer, draw_note_mark)
         end
         local x, y, w, h = rect.x, rect.y, rect.w, rect.h
-        bb:paintRect(x + 2, y, Size.line.thick, h, Blitbuffer.COLOR_GRAY_4)
+        -- bb:paintRect(x + 2, y, Size.line.thick, h, Blitbuffer.COLOR_GRAY_4)
+        bb:paintRect(x + w - 10, y, Size.line.thick, h, Blitbuffer.COLOR_GRAY_4)
     end
 
 
@@ -176,4 +197,20 @@ Dispatcher:registerAction("toggle_vertical_read", {category="none", event="Toggl
 
 function onToggleVerticalRead()
     ReaderRolling:onToggleVerticalRead()
+end
+
+ReaderRolling.onToggleDictionaryLookup = function(self)
+    G_reader_settings:flipNilOrFalse("highlight_action_on_single_word")
+    local isOn = G_reader_settings:nilOrFalse("highlight_action_on_single_word")
+    local loading = InfoMessage:new{
+      text = "Dictionary Lookup: "..(isOn and _("Enabled") or _("disabled")),
+      timeout = 2
+    }
+    UIManager:show(loading)
+end
+
+Dispatcher:registerAction("toggle_dictionary_lookup", {category="none", event="ToggleDictionaryLookup", title="Toggle Dictionary Lookup on Word", rolling=true})
+
+function onToggleDictionaryLookup()
+    ReaderRolling:onToggleDictionaryLookup()
 end
