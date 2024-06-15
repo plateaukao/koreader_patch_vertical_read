@@ -214,3 +214,28 @@ Dispatcher:registerAction("toggle_dictionary_lookup", {category="none", event="T
 function onToggleDictionaryLookup()
     ReaderRolling:onToggleDictionaryLookup()
 end
+
+
+-- add an action to toggle highlight action or show action menu
+Dispatcher:registerAction("toggle_highlight_or_menu", {category="none", event="ToggleHighlightOrMenu", title="Select to Highlight or Menu", rolling=true})
+
+ReaderRolling.onToggleHighlightOrMenu = function(self)
+    local current_highlight_action = G_reader_settings:readSetting("default_highlight_action", "ask")
+    if current_highlight_action == "highlight" then
+        G_reader_settings:saveSetting("default_highlight_action", "ask")
+        UIManager:show(InfoMessage:new{
+            text = _("Action menu is enabled.\nSelect text to show actions."),
+            timeout = 2
+        })
+    else
+        G_reader_settings:saveSetting("default_highlight_action", "highlight")
+        UIManager:show(InfoMessage:new{
+            text = _("Highlight is enabled.\nSelect text to highlight."),
+            timeout = 2
+        })
+    end
+end
+
+function onToggleHighlightOrMenu()
+    ReaderRolling:onToggleHighlightOrMenu()
+end
