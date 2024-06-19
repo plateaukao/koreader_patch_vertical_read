@@ -239,3 +239,112 @@ end
 function onToggleHighlightOrMenu()
     ReaderRolling:onToggleHighlightOrMenu()
 end
+
+local ReaderHighlight = require("apps/reader/modules/readerhighlight")
+local ButtonDialog = require("ui/widget/buttondialog")
+local C_ = _.pgettext
+
+ReaderHighlight_orig_onShowHighlightDialog = ReaderHighlight.onShowHighlightDialog
+ReaderHighlight.onShowHighlightDialog = function(self, index)
+    isVerticalHackEnabled = self.ui.doc_settings:isTrue("vertical_reading_hack")
+    if not isVerticalHackEnabled then
+        ReaderHighlight_orig_onShowHighlightDialog(self, index)
+        return
+    end    
+
+    local item = self.ui.annotation.annotations[index]
+    local enabled = not item.text_edited
+    local start_prev = "▒△"
+    local start_next = "▒▽"
+    local end_prev = "△▒"
+    local end_next = "▽▒"
+
+    local buttons = {
+        {
+            {
+                text = _("Delete"),
+                callback = function()
+                    self:deleteHighlight(index)
+                    UIManager:close(self.edit_highlight_dialog)
+                    self.edit_highlight_dialog = nil
+                end,
+            },
+            {
+                text = C_("Highlight", "Style"),
+                callback = function()
+                    self:editHighlightStyle(index)
+                    UIManager:close(self.edit_highlight_dialog)
+                    self.edit_highlight_dialog = nil
+                end,
+            },
+            {
+                text = item.note and _("Edit note") or _("Add note"),
+                callback = function()
+                    self:editHighlight(index)
+                    UIManager:close(self.edit_highlight_dialog)
+                    self.edit_highlight_dialog = nil
+                end,
+            },
+            {
+                text = "…",
+                callback = function()
+                    self.selected_text = util.tableDeepCopy(item)
+                    self:onShowHighlightMenu(index)
+                    UIManager:close(self.edit_highlight_dialog)
+                    self.edit_highlight_dialog = nil
+                end,
+            },
+        }
+    }
+
+    table.insert(buttons, {
+            {
+                text = end_prev,
+                enabled = enabled,
+                callback = function()
+                    self:updateHighlight(index, 1, -1, false)
+                end,
+                hold_callback = function()
+                    self:updateHighlight(index, 1, -1, true)
+                end
+            },
+            {
+                text = end_next,
+                enabled = enabled,
+                callback = function()
+                    self:updateHighlight(index, 1, 1, false)
+                end,
+                hold_callback = function()
+                    self:updateHighlight(index, 1, 1, true)
+                end
+            },
+            {
+                text = start_next,
+                enabled = enabled,
+                callback = function()
+                    self:updateHighlight(index, 0, 1, false)
+                end,
+                hold_callback = function()
+                    self:updateHighlight(index, 0, 1, true)
+                    return true
+                end
+            },
+            {
+                text = start_prev,
+                enabled = enabled,
+                callback = function()
+                    self:updateHighlight(index, 0, -1, false)
+                end,
+                hold_callback = function()
+                    self:updateHighlight(index, 0, -1, true)
+                    return true
+                end
+            },
+    })
+
+    self.edit_highlight_dialog = ButtonDialog:new{
+        buttons = buttons,
+    }
+    UIManager:show(self.edit_highlight_dialog)
+    return true
+end
