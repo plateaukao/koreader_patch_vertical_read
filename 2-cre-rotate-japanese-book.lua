@@ -277,6 +277,8 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
                     self.edit_highlight_dialog = nil
                 end,
             },
+        },
+        {
             {
                 text = item.note and _("Edit note") or _("Add note"),
                 callback = function()
@@ -294,10 +296,8 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
                     self.edit_highlight_dialog = nil
                 end,
             },
-        }
-    }
-
-    table.insert(buttons, {
+        },
+        {
             {
                 text = end_prev,
                 enabled = enabled,
@@ -308,6 +308,19 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
                     self:updateHighlight(index, 1, -1, true)
                 end
             },
+            {
+                text = start_prev,
+                enabled = enabled,
+                callback = function()
+                    self:updateHighlight(index, 0, -1, false)
+                end,
+                hold_callback = function()
+                    self:updateHighlight(index, 0, -1, true)
+                    return true
+                end
+            },
+        },
+        {
             {
                 text = end_next,
                 enabled = enabled,
@@ -329,18 +342,8 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
                     return true
                 end
             },
-            {
-                text = start_prev,
-                enabled = enabled,
-                callback = function()
-                    self:updateHighlight(index, 0, -1, false)
-                end,
-                hold_callback = function()
-                    self:updateHighlight(index, 0, -1, true)
-                    return true
-                end
-            },
-    })
+        }
+    }
 
     self.edit_highlight_dialog = ButtonDialog:new{
         buttons = buttons,
