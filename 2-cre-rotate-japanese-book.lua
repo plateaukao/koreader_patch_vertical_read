@@ -5,6 +5,7 @@ local logger = require("logger")
 local ReaderView = require("apps/reader/modules/readerview")
 local Size = require("ui/size")
 local UIManager = require("ui/uimanager")
+local util = require("util")
 
 local Dispatcher = require("dispatcher")  -- luacheck:ignore
 local InfoMessage = require("ui/widget/infomessage")
