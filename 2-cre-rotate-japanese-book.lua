@@ -67,14 +67,60 @@ ReaderRolling.onPreRenderDocument = function(self)
     local document = self.ui.document
 
     local ReaderView_orig_drawHighlightRect = ReaderView.drawHighlightRect
-    ReaderView.drawHighlightRect = function(self, bb, _x, _y, rect, drawer, draw_note_mark)
+    ReaderView.drawHighlightRect = function(self, bb, _x, _y, rect, drawer, color, draw_note_mark)
         isVerticalHackEnabled = self.ui.doc_settings:isTrue("vertical_reading_hack")
-        if (not isVerticalHackEnabled) or drawer ~= "underscore" then
-            return ReaderView_orig_drawHighlightRect(self, bb, _x, _y, rect, drawer, draw_note_mark)
+        if (not isVerticalHackEnabled) then
+            return ReaderView_orig_drawHighlightRect(self, bb, _x, _y, rect, drawer, color, draw_note_mark)
         end
         local x, y, w, h = rect.x, rect.y, rect.w, rect.h
-        -- bb:paintRect(x + 2, y, Size.line.thick, h, Blitbuffer.COLOR_GRAY_4)
-        bb:paintRect(x + w - 10, y, Size.line.thick, h, Blitbuffer.COLOR_GRAY_4)
+        -- bb:paintRect(x + w - 10, y, Size.line.thick, h, Blitbuffer.COLOR_GRAY_4)
+        if drawer == "lighten" or drawer == "invert" then
+            local pct = G_reader_settings:readSetting("highlight_height_pct")
+            if pct ~= nil then
+                w = math.floor(w * pct / 100)
+                x = x + math.ceil((rect.w - w) / 2)
+            end
+        end
+        if drawer == "lighten" then
+            if not color then
+                bb:darkenRect(x, y, w, h, self.highlight.lighten_factor)
+            else
+                if bb:getInverse() == 1 then
+                    -- MUL doesn't really work on a black background, so, switch to OVER if we're in software nightmode...
+                    -- NOTE: If we do *not* invert the color here, it *will* get inverted by the blitter given that the target bb is inverted.
+                    --       While not particularly pretty, this (roughly) matches with hardware nightmode, *and* how MuPDF renders highlights...
+                    --       But it's *really* not pretty (https://github.com/koreader/koreader/pull/11044#issuecomment-1902886069), so we'll fix it ;p.
+                    local c = Blitbuffer.ColorRGB32(color.r, color.g, color.b, 0xFF * self.highlight.lighten_factor):invert()
+                    bb:blendRectRGB32(x, y, w, h, c)
+                else
+                    bb:multiplyRectRGB(x, y, w, h, color)
+                end
+            end
+        elseif drawer == "strikeout" then
+            if not color then
+                color = Blitbuffer.COLOR_BLACK
+            end
+            local line_x = x + math.floor(w / 2) + 1
+            if self.ui.paging then
+                line_x = line_x + 2
+            end
+            if Blitbuffer.isColor8(color) then
+                bb:paintRect(line_x, y, Size.line.thick, h, color)
+            else
+                bb:paintRectRGB32(line_x, y, Size.line.thick, h, color)
+            end
+        elseif drawer == "underscore" then
+            if not color then
+                color = Blitbuffer.COLOR_GRAY_4
+            end
+            if Blitbuffer.isColor8(color) then
+                bb:paintRect(x + w - 12 , y, Size.line.thick, h, color)
+            else
+                bb:paintRectRGB32(x + w - 12, y, Size.line.thick, h, color)
+            end
+        elseif drawer == "invert" then
+            bb:invertRect(x, y, w, h)
+        end
     end
 
 
@@ -274,6 +320,15 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
                 text = C_("Highlight", "Style"),
                 callback = function()
                     self:editHighlightStyle(index)
+                    UIManager:close(self.edit_highlight_dialog)
+                    self.edit_highlight_dialog = nil
+                end,
+            },
+            {
+                text = C_("Highlight", "Color"),
+                enabled = item.drawer ~= "invert",
+                callback = function()
+                    self:editHighlightColor(index)
                     UIManager:close(self.edit_highlight_dialog)
                     self.edit_highlight_dialog = nil
                 end,
