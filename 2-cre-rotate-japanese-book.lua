@@ -336,9 +336,9 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
         },
         {
             {
-                text = item.note and _("Edit note") or _("Add note"),
+                text = _("Note"),
                 callback = function()
-                    self:editHighlight(index)
+                    self:editNote(index)
                     UIManager:close(self.edit_highlight_dialog)
                     self.edit_highlight_dialog = nil
                 end,
