@@ -291,11 +291,11 @@ local ReaderHighlight = require("apps/reader/modules/readerhighlight")
 local ButtonDialog = require("ui/widget/buttondialog")
 local C_ = _.pgettext
 
-ReaderHighlight_orig_onShowHighlightDialog = ReaderHighlight.onShowHighlightDialog
-ReaderHighlight.onShowHighlightDialog = function(self, index)
+ReaderHighlight_orig_showHighlightDialog = ReaderHighlight.showHighlightDialog
+ReaderHighlight.showHighlightDialog = function(self, index)
     isVerticalHackEnabled = self.ui.doc_settings:isTrue("vertical_reading_hack")
     if not isVerticalHackEnabled then
-        ReaderHighlight_orig_onShowHighlightDialog(self, index)
+        ReaderHighlight_orig_showHighlightDialog(self, index)
         return
     end    
 
@@ -309,11 +309,10 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
     local buttons = {
         {
             {
-                text = _("Delete"),
+                text = _("\u{F48E}"),
                 callback = function()
                     self:deleteHighlight(index)
                     UIManager:close(self.edit_highlight_dialog)
-                    self.edit_highlight_dialog = nil
                 end,
             },
             {
@@ -321,7 +320,6 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
                 callback = function()
                     self:editHighlightStyle(index)
                     UIManager:close(self.edit_highlight_dialog)
-                    self.edit_highlight_dialog = nil
                 end,
             },
             {
@@ -330,7 +328,6 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
                 callback = function()
                     self:editHighlightColor(index)
                     UIManager:close(self.edit_highlight_dialog)
-                    self.edit_highlight_dialog = nil
                 end,
             },
         },
@@ -340,7 +337,13 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
                 callback = function()
                     self:editNote(index)
                     UIManager:close(self.edit_highlight_dialog)
-                    self.edit_highlight_dialog = nil
+                end,
+            },
+            {
+                text = _("Details"),
+                callback = function()
+                    self.ui.bookmark:showBookmarkDetails(index)
+                    UIManager:close(self.edit_highlight_dialog)
                 end,
             },
             {
@@ -349,7 +352,6 @@ ReaderHighlight.onShowHighlightDialog = function(self, index)
                     self.selected_text = util.tableDeepCopy(item)
                     self:onShowHighlightMenu(index)
                     UIManager:close(self.edit_highlight_dialog)
-                    self.edit_highlight_dialog = nil
                 end,
             },
         },
