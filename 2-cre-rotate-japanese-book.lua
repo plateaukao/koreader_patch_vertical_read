@@ -193,14 +193,14 @@ end
 ReaderRolling.onPreRenderDocument = function(self)
     -- Let's do it with a setting toggable via the menu item defined above
     isVerticalHackEnabled = self.ui.doc_settings:isTrue("vertical_reading_hack")
-    if not isVerticalHackEnabled then
-        return
-    end    
 
+    -- self.ui.view.inverse_reading_order
     -- Inverse reading order (not sure this is for the best, as ToC items are RTL,
     -- but BookMap and PageBrowser may look as expected)
-    if not self.ui.view.inverse_reading_order then
-        self.ui.view:onToggleReadingOrder()
+    self.ui.view:onToggleReadingOrder(isVerticalHackEnabled)
+
+    if not isVerticalHackEnabled then
+        return
     end
 
     -- Hack a few credocument methods
